@@ -1,0 +1,47 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Purpose: compare frequentist confidence intervals to Bayesian credible interval.
+
+First generate a population to work with:
+
+```{r}
+n <- 1e5
+r <- 0.7
+pop <- data.frame(c(1:n), 0)
+colnames(pop) <- c("id", "belief")
+pop[,'belief'][sample(c(1:n), r*n)] <- 1
+head(pop)
+```
+
+Now we take a sample and calculate a frequentist confidence interval. To do this we will use MLE. From a frequentist perspective, how does this work?
+
+The frequentist believes that the parameter in question is fixed but unknown. This means we can't associate any probability distribution with it. From Bolstad:
+
+>The only probability considered is the random sample of size $n$ given the parameter.
+
+From this perspective, frequentist statistics is concerned with how statistics taken from a single random sample vary across all random samples. 
+
+Given this random sample we want to make an estimate of the unknown parameter $\theta$. We can use the sample proportion, which turns out to be the MLE.
+
+We take a sample of size $n$ from the population and calculate a statistic from that sample
+
+```{r}
+samp <- sample(pop[,"belief"], 100)
+sampParams <- list(
+  alpha = sum(samp),
+  beta = length(samp) - sum(samp)
+)
+
+sampParams["est"] <- sampParams$alpha / (sampParams$alpha + sampParams$beta)
+sampParams["interval"] <- qbeta(c(0.025, 0.975), sampParams$alpha, sampParams$beta)
+
+with(sampParams, {
+  curve(dbeta(x, alpha, beta), 0, 1)
+  abline(v=est, col='blue')
+  abline(v=r, col='red')
+})
+```
+
